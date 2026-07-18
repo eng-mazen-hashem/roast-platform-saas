@@ -1,0 +1,30 @@
+'use server'
+
+import { redirect } from 'next/navigation'
+import { createClient } from '@/utils/supabase/server'
+
+export type ActionResponse = {
+  error?: string
+}
+
+export async function loginAction(prevState: any, formData: FormData): Promise<ActionResponse> {
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+
+  if (!email || !password) {
+    return { error: 'Email and password are required' }
+  }
+
+  const supabase = createClient()
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  redirect('/dashboard-redirect')
+}
