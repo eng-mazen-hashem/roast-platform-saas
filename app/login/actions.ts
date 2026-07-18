@@ -8,23 +8,32 @@ export type ActionResponse = {
 }
 
 export async function loginAction(prevState: any, formData: FormData): Promise<ActionResponse & { success?: boolean }> {
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
+  try {
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
 
-  if (!email || !password) {
-    return { error: 'Email and password are required' }
+    if (!email || !password) {
+      return { error: 'Email and password are required' }
+    }
+
+    // Proactively check env configurations at runtime
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      return { error: `Supabase environment variables are missing on host: URL=${process.env.NEXT_PUBLIC_SUPABASE_URL ? 'set' : 'missing'}, KEY=${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'set' : 'missing'}` }
+    }
+
+    const supabase = createClient()
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      return { error: error.message }
+    }
+
+    return { success: true }
+  } catch (err: any) {
+    return { error: `Runtime Exception: ${err?.message || err}` }
   }
-
-  const supabase = createClient()
-
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
-
-  if (error) {
-    return { error: error.message }
-  }
-
-  return { success: true }
 }
