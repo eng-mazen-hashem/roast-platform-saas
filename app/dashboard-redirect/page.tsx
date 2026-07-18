@@ -12,8 +12,10 @@ export default async function DashboardRedirectPage() {
   if (!user) {
     const cookieStore = cookies()
     const allCookies = cookieStore.getAll()
-    const cookieNames = allCookies.map(c => c.name).join(', ')
-    redirect(`/login?error=no_user_in_redirect&msg=${encodeURIComponent(error?.message || 'none')}&cookies=${encodeURIComponent(cookieNames || 'none')}`)
+    const cookieNames = allCookies.map(c => `${c.name}(len:${c.value.length})`).join(', ')
+    const hasUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL
+    const hasKey = !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    redirect(`/login?error=no_user_in_redirect&msg=${encodeURIComponent(error?.message || 'none')}&cookies=${encodeURIComponent(cookieNames || 'none')}&envUrl=${hasUrl}&envKey=${hasKey}`)
   }
 
   // 1. Check custom metadata claims for role and tenant_id
