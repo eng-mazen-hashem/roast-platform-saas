@@ -41,7 +41,7 @@ export default async function DashboardRedirectPage() {
   }
 
   if (tenantId) {
-    redirect(`/roasteries/${tenantId}/overview`)
+    redirect(`/roasteries/${tenantId}/fleet`)
   }
 
   // Fallback if the user has authenticated but is not assigned to a roastery

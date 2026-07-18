@@ -58,15 +58,32 @@ export async function updateSession(request: NextRequest) {
     const tenantMatch = path.match(/^\/roasteries\/([^/]+)/)
     if (tenantMatch) {
       const requestedTenantId = tenantMatch[1]
-      const userTenantId = user.app_metadata.tenant_id || user.user_metadata.tenant_id
-      const userRole = user.app_metadata.role || user.user_metadata.role
+      let userTenantId = user.app_metadata.tenant_id || user.user_metadata.tenant_id
+      let userRole = user.app_metadata.role || user.user_metadata.role
+
+      // Database fallback if JWT claim isn't propagated to cookie session yet
+      if (!userTenantId || !userRole) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles' as any)
+            .select('role, tenant_id')
+            .eq('id', user.id)
+            .single()
+          if (profile) {
+            userRole = (profile as any).role
+            userTenantId = (profile as any).tenant_id
+          }
+        } catch (err) {
+          // Keep defaults if query fails
+        }
+      }
 
       const isSuperAdmin = userRole === 'super_admin'
 
       // Block access if they are neither a Super Admin nor assigned to the requested roastery (tenant)
       if (!isSuperAdmin && userTenantId !== requestedTenantId) {
         if (userTenantId) {
-          url.pathname = `/roasteries/${userTenantId}/overview`
+          url.pathname = `/roasteries/${userTenantId}/fleet`
           return NextResponse.redirect(url)
         } else {
           // If the authenticated user has no assigned tenant, send back to login with a warning
@@ -80,11 +97,28 @@ export async function updateSession(request: NextRequest) {
 
   // Rule 4: Restrict super-admin routes to super_admin role only
   if (isSuperAdminRoute && user) {
-    const userRole = user.app_metadata.role || user.user_metadata.role
+    let userRole = user.app_metadata.role || user.user_metadata.role
+    let userTenantId = user.app_metadata.tenant_id || user.user_metadata.tenant_id
+
+    if (!userRole) {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles' as any)
+          .select('role, tenant_id')
+          .eq('id', user.id)
+          .single()
+        if (profile) {
+          userRole = (profile as any).role
+          userTenantId = (profile as any).tenant_id
+        }
+      } catch (err) {
+        // Keep defaults
+      }
+    }
+
     if (userRole !== 'super_admin') {
-      const userTenantId = user.app_metadata.tenant_id || user.user_metadata.tenant_id
       if (userTenantId) {
-        url.pathname = `/roasteries/${userTenantId}/overview`
+        url.pathname = `/roasteries/${userTenantId}/fleet`
       } else {
         url.pathname = '/login'
         url.searchParams.set('error', 'unauthorized_admin')
