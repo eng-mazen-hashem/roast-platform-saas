@@ -19,10 +19,11 @@ export default async function RoasteryLayout({
   // Retrieve user session
   const {
     data: { user },
+    error
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/login')
+    redirect(`/login?error=no_user_in_layout&msg=${encodeURIComponent(error?.message || 'none')}`)
   }
 
   // Retrieve tenant name from the DB (resilient fallbacks for tenants/roasteries tables)

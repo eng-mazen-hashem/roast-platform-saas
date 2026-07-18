@@ -5,10 +5,11 @@ export default async function DashboardRedirectPage() {
   const supabase = createClient()
   const {
     data: { user },
+    error
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/login')
+    redirect(`/login?error=no_user_in_redirect&msg=${encodeURIComponent(error?.message || 'none')}`)
   }
 
   // 1. Check custom metadata claims for role and tenant_id
