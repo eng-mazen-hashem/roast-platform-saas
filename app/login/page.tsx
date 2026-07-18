@@ -1,41 +1,44 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useFormState, useFormStatus } from 'react-dom'
-import { loginAction } from './actions'
-
-function SubmitButton() {
-  const { pending } = useFormStatus()
-
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-zinc-950 bg-amber-500 hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:ring-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-    >
-      {pending ? (
-        <span className="flex items-center space-x-2">
-          <svg className="animate-spin h-5 w-5 text-zinc-950" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
-          <span>Authenticating...</span>
-        </span>
-      ) : (
-        'Sign in'
-      )}
-    </button>
-  )
-}
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/utils/supabase/client'
 
 export default function LoginPage() {
-  const [state, formAction] = useFormState(loginAction, {})
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
+  const supabase = createClient()
 
-  useEffect(() => {
-    if (state?.success) {
-      window.location.href = '/dashboard-redirect'
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    
+    const formData = new FormData(e.currentTarget)
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+
+    if (!email || !password) {
+      setError('Email and password are required')
+      setLoading(false)
+      return
     }
-  }, [state])
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (signInError) {
+      setError(signInError.message)
+      setLoading(false)
+      return
+    }
+
+    // Force a full page reload to dashboard-redirect to ensure cookies are sent cleanly
+    window.location.href = '/dashboard-redirect'
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
@@ -43,41 +46,49 @@ export default function LoginPage() {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-[300px] h-[300px] bg-zinc-800/20 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="sm:mx-auto w-full sm:max-w-md z-10">
-        {/* Custom Industrial IoT Coffee Logo */}
-        <div className="flex justify-center items-center space-x-3">
-          <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div className="flex justify-center mb-6">
+          <div className="w-12 h-12 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center">
+            {/* Minimalist coffee bean/data icon */}
             <svg
-              className="h-6 w-6 text-amber-500"
+              className="w-6 h-6 text-amber-500"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg"
             >
-              {/* Flame/Steam & Coffee bean stylized outline */}
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M14 12a2 2 0 11-4 0 2 2 0 014 0z"
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"
               />
             </svg>
           </div>
-          <span className="text-xl font-bold tracking-wider text-zinc-100 uppercase">
-            Artisan<span className="text-amber-500">Roast</span>
-          </span>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-zinc-100 tracking-tight">
-          Enterprise Portal
+        <h2 className="mt-2 text-center text-3xl font-extrabold text-white tracking-tight">
+          ARTISAN<span className="text-amber-500">ROAST</span>
         </h2>
         <p className="mt-2 text-center text-sm text-zinc-400">
-          Monitor your fleet, roast profiles, and modbus telemetry
+          Enterprise Portal
+          <br />
+          <span className="text-xs text-zinc-500">Monitor your fleet, roast profiles, and modbus telemetry</span>
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto w-full sm:max-w-md z-10 px-4 sm:px-0">
-        <div className="bg-zinc-900/50 backdrop-blur-md py-8 px-4 border border-zinc-800 shadow-xl rounded-2xl sm:px-10">
-          <form action={formAction} className="space-y-6">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div className="bg-zinc-900/50 backdrop-blur-xl py-8 px-4 shadow-2xl shadow-black/50 sm:rounded-2xl border border-zinc-800/50 sm:px-10">
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-start">
+                <svg className="w-5 h-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <p className="text-sm text-red-400 leading-relaxed">{error}</p>
+              </div>
+            )}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-zinc-300">
                 Email Address
@@ -112,22 +123,22 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {state?.error && (
-              <div className="rounded-lg bg-red-950/30 border border-red-800/40 p-3">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-red-400">{state.error}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <SubmitButton />
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-zinc-950 bg-amber-500 hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:ring-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              {loading ? (
+                <>
+                  <svg className="w-4 h-4 mr-2 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
+                  Authenticating...
+                </>
+              ) : (
+                'Sign in'
+              )}
+            </button>
           </form>
         </div>
       </div>
