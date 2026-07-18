@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
+import { cookies } from 'next/headers'
 
 export default async function DashboardRedirectPage() {
   const supabase = createClient()
@@ -9,7 +10,10 @@ export default async function DashboardRedirectPage() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect(`/login?error=no_user_in_redirect&msg=${encodeURIComponent(error?.message || 'none')}`)
+    const cookieStore = cookies()
+    const allCookies = cookieStore.getAll()
+    const cookieNames = allCookies.map(c => c.name).join(', ')
+    redirect(`/login?error=no_user_in_redirect&msg=${encodeURIComponent(error?.message || 'none')}&cookies=${encodeURIComponent(cookieNames || 'none')}`)
   }
 
   // 1. Check custom metadata claims for role and tenant_id
