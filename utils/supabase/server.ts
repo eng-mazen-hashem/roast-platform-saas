@@ -14,9 +14,16 @@ export function createClient() {
         },
         setAll(cookiesToSet: { name: string; value: string; options: any }[]) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
+            cookiesToSet.forEach(({ name, value, options }) => {
+              const { domain, ...otherOptions } = options || {}
+              cookieStore.set(name, value, {
+                path: '/',
+                sameSite: 'lax',
+                secure: true,
+                httpOnly: true,
+                ...otherOptions,
+              })
+            })
           } catch (error: any) {
             throw new Error(`cookieStore.set failed: ${error?.message || error}`)
           }
