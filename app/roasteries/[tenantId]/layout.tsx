@@ -2,6 +2,10 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import DashboardShell from '@/components/layout/dashboard-shell'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
+
 interface RoasteryLayoutProps {
   children: React.ReactNode
   params: {
