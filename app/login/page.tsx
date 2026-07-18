@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
 import { loginAction } from './actions'
 
@@ -29,6 +30,12 @@ function SubmitButton() {
 
 export default function LoginPage() {
   const [state, formAction] = useFormState(loginAction, {})
+
+  useEffect(() => {
+    if (state?.success) {
+      window.location.href = '/dashboard-redirect'
+    }
+  }, [state])
 
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">

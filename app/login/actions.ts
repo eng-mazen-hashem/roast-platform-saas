@@ -7,7 +7,7 @@ export type ActionResponse = {
   error?: string
 }
 
-export async function loginAction(prevState: any, formData: FormData): Promise<ActionResponse> {
+export async function loginAction(prevState: any, formData: FormData): Promise<ActionResponse & { success?: boolean }> {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
@@ -26,5 +26,5 @@ export async function loginAction(prevState: any, formData: FormData): Promise<A
     return { error: error.message }
   }
 
-  redirect('/dashboard-redirect')
+  return { success: true }
 }
