@@ -15,13 +15,13 @@ export function createClient() {
         setAll(cookiesToSet: { name: string; value: string; options: any }[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
-              const { domain, ...otherOptions } = options || {}
+              const { domain, path, ...otherOptions } = options || {}
               cookieStore.set(name, value, {
+                ...otherOptions,
                 path: '/',
                 sameSite: 'lax',
                 secure: true,
                 httpOnly: true,
-                ...otherOptions,
               })
             })
           } catch (error: any) {

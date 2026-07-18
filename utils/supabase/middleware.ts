@@ -16,13 +16,13 @@ export async function updateSession(request: NextRequest) {
         },
         setAll(cookiesToSet: { name: string; value: string; options: any }[]) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            const { domain, ...otherOptions } = options || {}
+            const { domain, path, ...otherOptions } = options || {}
             const mergedOptions = {
+              ...otherOptions,
               path: '/',
               sameSite: 'lax' as const,
               secure: true,
               httpOnly: true,
-              ...otherOptions,
             }
             request.cookies.set(name, value)
             supabaseResponse.cookies.set(name, value, mergedOptions)
