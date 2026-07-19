@@ -31,9 +31,7 @@ export default function LoginPage() {
       setLoading(false)
       return
     }
-
-    router.push('/dashboard-redirect')
-    router.refresh()
+    // If loginAction succeeds, it redirects internally, so we don't need to do anything else here.
   }
 
   return (

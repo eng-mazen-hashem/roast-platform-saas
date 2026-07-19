@@ -32,7 +32,8 @@ export async function loginAction(prevState: any, formData: FormData): Promise<A
       return { error: error.message }
     }
 
-    return { success: true }
+    // Redirect directly from the server action to guarantee cookie delivery
+    redirect('/dashboard-redirect')
   } catch (err: any) {
     return { error: `Runtime Exception: ${err?.message || err}` }
   }
