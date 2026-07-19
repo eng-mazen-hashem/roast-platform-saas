@@ -1,12 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/utils/supabase/client'
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const supabase = createClient()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -23,20 +21,24 @@ export default function LoginPage() {
       return
     }
 
-    // Sign in client-side so the browser saves the cookies itself
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    // Call the server-side Route Handler so the server sets the cookies
+    // directly in the HTTP response — guaranteeing the correct cookie format
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+      credentials: 'include', // ensure cookies from response are saved
     })
 
-    if (signInError) {
-      setError(signInError.message)
+    const data = await res.json()
+
+    if (!res.ok || data.error) {
+      setError(data.error || 'Login failed')
       setLoading(false)
       return
     }
 
-    // Use full-page navigation (NOT router.push) so the browser sends
-    // the newly saved cookies in the HTTP request to /dashboard-redirect
+    // Full-page navigation so the browser sends the freshly set cookies
     window.location.href = '/dashboard-redirect'
   }
 
