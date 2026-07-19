@@ -2,13 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/utils/supabase/client'
+import { loginAction } from './actions'
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -25,19 +24,16 @@ export default function LoginPage() {
       return
     }
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const result = await loginAction(null, formData)
 
-    if (signInError) {
-      setError(signInError.message)
+    if (result?.error) {
+      setError(result.error)
       setLoading(false)
       return
     }
 
-    // Force a full page reload to dashboard-redirect to ensure cookies are sent cleanly
-    window.location.href = '/dashboard-redirect'
+    router.push('/dashboard-redirect')
+    router.refresh()
   }
 
   return (
