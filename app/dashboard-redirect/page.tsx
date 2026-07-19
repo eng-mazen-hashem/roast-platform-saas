@@ -23,12 +23,16 @@ export default async function DashboardRedirectPage() {
     const cookieNames = allCookies.map(c => `${c.name}(len:${c.value.length})`).join(', ')
     const hasUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL
     const hasKey = !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    
+
     const sessStatus = session ? 'session_present' : 'no_session'
     const sessErr = sessionError?.message || 'none'
     const usrErr = userError?.message || 'none'
-    
-    redirect(`/login?error=no_user_in_redirect&msg=${encodeURIComponent(usrErr)}&sessStatus=${sessStatus}&sessErr=${encodeURIComponent(sessErr)}&cookies=${encodeURIComponent(cookieNames || 'none')}&envUrl=${hasUrl}&envKey=${hasKey}`)
+
+    // Read raw cookie prefix to identify format (base64, JSON, etc.)
+    const authCookie = allCookies.find(c => c.name.includes('auth-token'))
+    const rawPrefix = authCookie ? authCookie.value.substring(0, 30) : 'not_found'
+
+    redirect(`/login?error=no_user_in_redirect&msg=${encodeURIComponent(usrErr)}&sessStatus=${sessStatus}&sessErr=${encodeURIComponent(sessErr)}&cookies=${encodeURIComponent(cookieNames || 'none')}&rawPrefix=${encodeURIComponent(rawPrefix)}&envUrl=${hasUrl}&envKey=${hasKey}`)
   }
 
   // 1. Check custom metadata claims for role and tenant_id
