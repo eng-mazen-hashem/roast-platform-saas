@@ -8,9 +8,13 @@ export const fetchCache = 'force-no-store'
 
 export default async function DashboardRedirectPage() {
   const supabase = createClient()
+  
+  // Diagnostic check: read session first
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+  
   const {
     data: { user },
-    error
+    error: userError
   } = await supabase.auth.getUser()
 
   if (!user) {
@@ -19,7 +23,12 @@ export default async function DashboardRedirectPage() {
     const cookieNames = allCookies.map(c => `${c.name}(len:${c.value.length})`).join(', ')
     const hasUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL
     const hasKey = !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    redirect(`/login?error=no_user_in_redirect&msg=${encodeURIComponent(error?.message || 'none')}&cookies=${encodeURIComponent(cookieNames || 'none')}&envUrl=${hasUrl}&envKey=${hasKey}`)
+    
+    const sessStatus = session ? 'session_present' : 'no_session'
+    const sessErr = sessionError?.message || 'none'
+    const usrErr = userError?.message || 'none'
+    
+    redirect(`/login?error=no_user_in_redirect&msg=${encodeURIComponent(usrErr)}&sessStatus=${sessStatus}&sessErr=${encodeURIComponent(sessErr)}&cookies=${encodeURIComponent(cookieNames || 'none')}&envUrl=${hasUrl}&envKey=${hasKey}`)
   }
 
   // 1. Check custom metadata claims for role and tenant_id
