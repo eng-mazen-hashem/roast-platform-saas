@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
           getAll() {
             return request.cookies.getAll()
           },
-          setAll(cookies) {
+          setAll(cookies: { name: string; value: string; options: any }[]) {
             // Collect cookies to be set on the response
             cookiesToSet.push(...cookies)
           },
