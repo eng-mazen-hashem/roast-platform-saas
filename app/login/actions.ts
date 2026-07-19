@@ -31,10 +31,11 @@ export async function loginAction(prevState: any, formData: FormData): Promise<A
     if (error) {
       return { error: error.message }
     }
-
-    // Redirect directly from the server action to guarantee cookie delivery
-    redirect('/dashboard-redirect')
   } catch (err: any) {
     return { error: `Runtime Exception: ${err?.message || err}` }
   }
+
+  // Redirect directly from the server action to guarantee cookie delivery
+  // Must be OUTSIDE the try-catch block because redirect() throws an error in Next.js
+  redirect('/dashboard-redirect')
 }
